@@ -23,3 +23,40 @@ export async function listRequestsFor(user: CurrentUser) {
     },
   });
 }
+
+/** One request, or null if it doesn't exist or this user may not see it. */
+export async function getRequestFor(user: CurrentUser, id: string) {
+  const staff = isStaff(user);
+  return prisma.recordsRequest.findFirst({
+    // Same rule as the list: a citizen asking for someone else's request gets null.
+    where: staff ? { id } : { id, requesterId: user.id },
+    select: {
+      id: true,
+      referenceNumber: true,
+      subject: true,
+      description: true,
+      status: true,
+      submittedAt: true,
+      dueAt: true,
+      closedAt: true,
+      requester: staff ? { select: { name: true, email: true } } : false,
+      assignedClerk: staff ? { select: { name: true } } : false,
+      // Citizens only see documents a clerk has released.
+      documents: {
+        where: staff ? {} : { isReleased: true },
+        orderBy: { createdAt: "asc" },
+        select: { id: true, filename: true, sizeBytes: true, isReleased: true },
+      },
+    },
+  });
+}
+
+/** Internal staff notes. Citizens get null, so the notes are never even loaded. */
+export async function getInternalNotesFor(user: CurrentUser, requestId: string) {
+  if (!isStaff(user)) return null;
+  return prisma.requestNote.findMany({
+    where: { requestId },
+    orderBy: { createdAt: "asc" },
+    select: { id: true, body: true, createdAt: true, author: { select: { name: true } } },
+  });
+}

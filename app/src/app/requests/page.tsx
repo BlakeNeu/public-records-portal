@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/dal";
 import { listRequestsFor } from "@/lib/requests";
 import { isOverdue } from "@/lib/deadlines";
@@ -28,6 +29,11 @@ async function RequestsTable() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h1 className="text-2xl font-semibold tracking-tight">{staff ? "All requests" : "My requests"}</h1>
+        {!staff && (
+          <Link href="/requests/new" className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-strong">
+            New request
+          </Link>
+        )}
         {staff && overdueCount > 0 && (
           <p className="text-sm font-medium text-danger">
             {overdueCount} {overdueCount === 1 ? "request is" : "requests are"} past due
@@ -54,7 +60,11 @@ async function RequestsTable() {
               {requests.map((r) => (
                 <tr key={r.id}>
                   <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{r.referenceNumber}</td>
-                  <td className="px-4 py-3">{r.subject}</td>
+                  <td className="px-4 py-3">
+                    <Link href={`/requests/${r.id}`} className="text-accent hover:underline">
+                      {r.subject}
+                    </Link>
+                  </td>
                   {staff && <td className="whitespace-nowrap px-4 py-3">{r.requester?.name}</td>}
                   {staff && (
                     <td className="whitespace-nowrap px-4 py-3">
