@@ -16,7 +16,7 @@ See [docs/architecture.md](docs/architecture.md) for the diagram and security bo
 
 | Path | What it is |
 |---|---|
-| `app/` | Next.js portal *(coming next)* |
+| `app/` | Next.js portal: login, roles, requests, audit log (Prisma schema and seed in `app/prisma/`) |
 | `integration-service/` | Internal FastAPI service: notifications and document lookups, with retries and structured logs |
 | `mock-services/` | Fake document-management system and email gateway for local development |
 | `infra/terraform/` | AWS infrastructure *(planned)* |
@@ -25,33 +25,74 @@ See [docs/architecture.md](docs/architecture.md) for the diagram and security bo
 
 ## Run it locally
 
-Requirements: Docker Desktop.
+Requirements: Docker Desktop and Node.js 20+.
+
+**1. Start Postgres, the integration service and the mocks**
 
 ```bash
 cp .env.example .env
 # set SERVICE_TOKEN in .env:
 python -c "import secrets; print(secrets.token_urlsafe(48))"
-docker compose up --build
+docker compose up --build -d
 ```
 
-### Integration service tests
+**2. Set up and run the portal**
 
 ```bash
-cd integration-service
-python -m venv .venv
-.venv/Scripts/activate        # macOS/Linux: source .venv/bin/activate
-pip install -r requirements-dev.txt
-pytest
+cd app
+cp .env.example .env          # match DATABASE_URL to the root .env; set AUTH_SECRET with: npx auth secret
+npm install
+npx prisma migrate deploy     # create the tables
+npx prisma generate           # generate the typed client
+npx prisma db seed            # load the fake demo data
+npm run dev                   # http://localhost:3000
 ```
+
+### Demo accounts
+
+Every account uses the `SEED_PASSWORD` from `app/.env`. All of them are fake.
+
+| Role | Email | Can |
+|---|---|---|
+| Citizen | `jane.citizen@example.com` | See only their own requests |
+| Citizen | `sam.resident@example.com` | See only their own requests |
+| Clerk | `morgan.clerk@example.org` | See every request, with overdue ones flagged |
+| Clerk | `riley.clerk@example.org` | Same as above |
+| Admin | `admin@example.org` | Everything above, plus the user list |
+
+### Tests
+
+```bash
+# Integration service (no local Python needed)
+docker run --rm -v "$PWD/integration-service:/src:ro" python:3.12-slim \
+  sh -c "cp -r /src /app && cd /app && pip install -q -r requirements-dev.txt && pytest -q"
+
+# Portal
+cd app && npm run lint && npx tsc --noEmit && npm run build
+```
+
+## Security notes
+
+- **Authorization is checked next to the data, not just in the proxy.** The proxy does a cheap cookie check for redirects. Every page and server action then loads the user from the database through one data access layer (`app/src/lib/dal.ts`), so a demoted user loses access on their next request, not when their session expires.
+- **Citizens can only query their own requests.** The rule lives in one place (`app/src/lib/requests.ts`) and is applied in the database query.
+- **The audit log is append-only at the database level.** A Postgres trigger rejects every `UPDATE` and `DELETE` on `audit_logs`, so app bugs can't rewrite history.
+- **Login doesn't leak which emails exist.** Wrong passwords and unknown emails return the same message and take the same time, because both run a bcrypt comparison.
+- **No open redirects after login.** The post-login destination must be a path on this site.
 
 ## Roadmap
 
 - [x] Integration service: auth, validation, retries, JSON logging, tests
 - [x] Mock upstream systems with simulated outages
 - [x] Docker Compose with isolated networks
-- [ ] Next.js portal: Auth.js login, citizen / clerk / admin roles
-- [ ] Request submission, clerk dashboard, status workflow, deadlines
-- [ ] Audit log and secure document uploads
+- [x] Next.js portal: Auth.js login, citizen / clerk / admin roles
+- [x] Database schema, migrations, append-only audit log, fake seed data
+- [x] Request list with deadlines and overdue flags
+- [ ] Request submission form and request detail page
+- [ ] Clerk workflow: assign, change status, internal notes, notifications via the integration service
+- [ ] Secure document uploads and release to citizens
+- [ ] Login rate limiting
+- [ ] Portal in Docker Compose
+- [ ] Unit and end-to-end tests for the portal
 - [ ] GitHub Actions CI
 - [ ] Terraform for AWS, validated with Checkov and LocalStack
 - [ ] Deployment guide, screenshots

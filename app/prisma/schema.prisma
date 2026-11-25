@@ -1,0 +1,126 @@
+// Public Records Request Portal data model.
+// Tables and columns use snake_case in Postgres; models use camelCase in TypeScript.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  citizen
+  clerk
+  admin
+}
+
+// Values match the integration service's RequestStatus enum.
+enum RequestStatus {
+  submitted
+  in_review
+  fulfilled
+  denied
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String
+  passwordHash String   @map("password_hash")
+  role         Role     @default(citizen)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  requests         RecordsRequest[]  @relation("Requester")
+  assignedRequests RecordsRequest[]  @relation("AssignedClerk")
+  uploads          RequestDocument[]
+  notes            RequestNote[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model RecordsRequest {
+  id              String        @id @default(cuid())
+  // Human-facing ID shown to citizens, e.g. PRR-2026-0001
+  referenceNumber String        @unique @map("reference_number")
+  subject         String
+  description     String        @db.Text
+  status          RequestStatus @default(submitted)
+  requesterId     String        @map("requester_id")
+  assignedClerkId String?       @map("assigned_clerk_id")
+  submittedAt     DateTime      @default(now()) @map("submitted_at")
+  dueAt           DateTime      @map("due_at")
+  closedAt        DateTime?     @map("closed_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+
+  requester     User              @relation("Requester", fields: [requesterId], references: [id], onDelete: Restrict)
+  assignedClerk User?             @relation("AssignedClerk", fields: [assignedClerkId], references: [id], onDelete: SetNull)
+  documents     RequestDocument[]
+  notes         RequestNote[]
+  auditLogs     AuditLog[]
+
+  @@index([status, dueAt])
+  @@index([requesterId])
+  @@index([assignedClerkId])
+  @@map("records_requests")
+}
+
+model RequestDocument {
+  id           String   @id @default(cuid())
+  requestId    String   @map("request_id")
+  filename     String
+  contentType  String   @map("content_type")
+  sizeBytes    Int      @map("size_bytes")
+  // Where the file lives in object storage; never derived from the user's filename.
+  storageKey   String   @unique @map("storage_key")
+  // Citizens only see documents a clerk has released.
+  isReleased   Boolean  @default(false) @map("is_released")
+  uploadedById String   @map("uploaded_by_id")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  request    RecordsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  uploadedBy User           @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+
+  @@index([requestId])
+  @@map("request_documents")
+}
+
+// Internal staff notes. Never shown to citizens.
+model RequestNote {
+  id        String   @id @default(cuid())
+  requestId String   @map("request_id")
+  authorId  String   @map("author_id")
+  body      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at")
+
+  request RecordsRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  author  User           @relation(fields: [authorId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
+  @@map("request_notes")
+}
+
+// Append-only: a database trigger (see the init migration) rejects UPDATE and DELETE.
+model AuditLog {
+  id         BigInt   @id @default(autoincrement())
+  // Null for anonymous events such as a failed login for an unknown email.
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  requestId  String?  @map("request_id")
+  metadata   Json?
+  ipAddress  String?  @map("ip_address")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  actor   User?           @relation(fields: [actorId], references: [id], onDelete: Restrict)
+  request RecordsRequest? @relation(fields: [requestId], references: [id], onDelete: Restrict)
+
+  @@index([requestId, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
+  @@map("audit_logs")
+}
