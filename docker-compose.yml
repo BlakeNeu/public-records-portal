@@ -1,0 +1,54 @@
+# Local development stack. Run: docker compose up --build
+#
+# Networks mirror the AWS design:
+#   internal - no route to the outside world; only the portal can reach the
+#              integration service, which only reaches the mock upstreams.
+#   data     - the portal and Postgres only.
+# The integration service publishes no host port, just like its private subnet in AWS.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
+      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432" # localhost only, so Prisma migrations can run from the host
+    networks: [data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  integration-service:
+    build: ./integration-service
+    environment:
+      SERVICE_TOKEN: ${SERVICE_TOKEN:?set in .env}
+      DMS_BASE_URL: http://mock-services:8100/dms
+      NOTIFY_BASE_URL: http://mock-services:8100/notify
+      LOG_LEVEL: INFO
+    networks: [internal]
+    depends_on:
+      mock-services:
+        condition: service_healthy
+
+  mock-services:
+    build: ./mock-services
+    environment:
+      MOCK_FAILURE_RATE: ${MOCK_FAILURE_RATE:-0.2}
+    networks: [internal]
+
+  # web: the Next.js portal is added here once the app/ scaffold exists.
+  # It joins all three networks and is the only service with a public port.
+
+networks:
+  internal:
+    internal: true
+  data: {}
+
+volumes:
+  pgdata: {}
