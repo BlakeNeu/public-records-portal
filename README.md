@@ -12,6 +12,8 @@ The portal is the only public component. Calls to outside systems go through an 
 
 See [docs/architecture.md](docs/architecture.md) for the diagram and security boundaries, and [docs/decisions.md](docs/decisions.md) for why it's built this way.
 
+**New to the codebase?** Start with the [developer guide](docs/guide/README.md). It explains TypeScript, Next.js and Prisma for developers coming from PHP and React, and walks through building a feature end to end.
+
 ## Repository layout
 
 | Path | What it is |
@@ -58,7 +60,7 @@ Requires Node.js 20+. Run the backing services in Docker and the portal on your 
 ```bash
 docker compose up -d db integration-service mock-services migrate
 cd app
-cp .env.example .env    # set AUTH_SECRET with: npx auth secret
+cp .env.example .env    # set AUTH_SECRET; see docs/guide/6-cheat-sheet.md
 npm install
 npx prisma generate
 npm run dev             # http://localhost:3000 (stop the Docker `web` service first if it's running)
