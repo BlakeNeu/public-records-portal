@@ -12,6 +12,9 @@ RUN npm ci --no-audit --no-fund
 FROM node:24-bookworm-slim AS build
 WORKDIR /app
 ENV NEXT_TELEMETRY_DISABLED=1
+# The Prisma CLI (generate, migrate) checks for OpenSSL.
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl \
+ && rm -rf /var/lib/apt/lists/*
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # prisma.config.ts needs a URL to load; nothing connects during the build.

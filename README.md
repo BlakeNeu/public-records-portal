@@ -25,32 +25,23 @@ See [docs/architecture.md](docs/architecture.md) for the diagram and security bo
 
 ## Run it locally
 
-Requirements: Docker Desktop and Node.js 20+.
-
-**1. Start Postgres, the integration service and the mocks**
+The only requirement is [Docker Desktop](https://www.docker.com/products/docker-desktop/). No Node.js, Python or Postgres install, and no config files.
 
 ```bash
-cp .env.example .env
-# set SERVICE_TOKEN in .env:
-python -c "import secrets; print(secrets.token_urlsafe(48))"
-docker compose up --build -d
+git clone <your fork's URL> prrp
+cd prrp
+docker compose up --build
 ```
 
-**2. Set up and run the portal**
+Open **http://localhost:3000** and sign in with a demo account below. The first build takes a few minutes; later starts take seconds.
 
-```bash
-cd app
-cp .env.example .env          # match DATABASE_URL to the root .env; set AUTH_SECRET with: npx auth secret
-npm install
-npx prisma migrate deploy     # create the tables
-npx prisma generate           # generate the typed client
-npx prisma db seed            # load the fake demo data
-npm run dev                   # http://localhost:3000
-```
+On first start, a one-off `migrate` container creates the tables and loads fake demo data. Later starts keep your data. To wipe it and start fresh, run `docker compose down -v`.
+
+Every setting has a local-only default. To change one, such as a port that's already in use, copy `.env.example` to `.env` and edit it.
 
 ### Demo accounts
 
-Every account uses the `SEED_PASSWORD` from `app/.env`. All of them are fake.
+Every account uses the password **`demo-password-local-only`**. All of them are fake.
 
 | Role | Email | Can |
 |---|---|---|
@@ -59,6 +50,21 @@ Every account uses the `SEED_PASSWORD` from `app/.env`. All of them are fake.
 | Clerk | `morgan.clerk@example.org` | See every request, with overdue ones flagged |
 | Clerk | `riley.clerk@example.org` | Same as above |
 | Admin | `admin@example.org` | Everything above, plus the user list |
+
+### Developing the portal with hot reload
+
+Requires Node.js 20+. Run the backing services in Docker and the portal on your machine:
+
+```bash
+docker compose up -d db integration-service mock-services migrate
+cd app
+cp .env.example .env    # set AUTH_SECRET with: npx auth secret
+npm install
+npx prisma generate
+npm run dev             # http://localhost:3000 (stop the Docker `web` service first if it's running)
+```
+
+The dev server can't reach the integration service, which only exists on Docker's private network. Features that call it need the full Docker stack.
 
 ### Tests
 
@@ -91,7 +97,7 @@ cd app && npm run lint && npx tsc --noEmit && npm run build
 - [ ] Clerk workflow: assign, change status, internal notes, notifications via the integration service
 - [ ] Secure document uploads and release to citizens
 - [ ] Login rate limiting
-- [ ] Portal in Docker Compose
+- [x] Whole stack runs with one `docker compose up`
 - [ ] Unit and end-to-end tests for the portal
 - [ ] GitHub Actions CI
 - [ ] Terraform for AWS, validated with Checkov and LocalStack

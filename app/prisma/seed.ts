@@ -12,7 +12,7 @@ if (process.env.NODE_ENV === "production") {
 }
 const password = process.env.SEED_PASSWORD;
 if (!password || password.length < 12) {
-  throw new Error("Set SEED_PASSWORD (12+ characters) in app/.env before seeding.");
+  throw new Error("Set SEED_PASSWORD (12+ characters) before seeding.");
 }
 
 const prisma = new PrismaClient({
@@ -201,7 +201,7 @@ async function main() {
 
   console.log(`Seeded ${users.length} users and ${requests.length} requests.`);
   for (const u of users) console.log(`  ${u.role.padEnd(8)} ${u.email}`);
-  console.log("All demo accounts use SEED_PASSWORD from app/.env.");
+  console.log("All demo accounts use SEED_PASSWORD (Docker default: demo-password-local-only).");
 }
 
 main()
