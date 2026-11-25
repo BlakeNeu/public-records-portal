@@ -1,5 +1,6 @@
 import "server-only";
 import { cache } from "react";
+import { connection } from "next/server";
 import { notFound, redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -12,6 +13,9 @@ import type { Role } from "@/generated/prisma/enums";
 export type CurrentUser = { id: string; name: string; email: string; role: Role };
 
 export const getCurrentUser = cache(async (): Promise<CurrentUser | null> => {
+  // Mark this as request-time work before Auth.js runs. Auth.js generates
+  // random bytes internally, which Cache Components rejects during prerender.
+  await connection();
   const session = await auth();
   const id = session?.user?.id;
   if (!id) return null;
