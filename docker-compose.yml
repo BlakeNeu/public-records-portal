@@ -1,22 +1,33 @@
-# Local development stack. Run: docker compose up --build
+# Whole stack, one command:   docker compose up --build
+# Then open http://localhost:3000 and sign in with a demo account from the README.
+#
+# Every setting has a local-only default, so no .env file is needed. To override
+# any of them, copy .env.example to .env. In AWS these come from Secrets Manager.
 #
 # Networks mirror the AWS design:
+#   public   - the only network with a published port, used by the portal.
+#   data     - the portal (and the one-off migrate job) and Postgres.
 #   internal - no route to the outside world; only the portal can reach the
 #              integration service, which only reaches the mock upstreams.
-#   data     - the portal and Postgres only.
-# The integration service publishes no host port, just like its private subnet in AWS.
+
+x-db-env: &db-env
+  POSTGRES_USER: ${POSTGRES_USER:-prrp}
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-dev-password}
+  POSTGRES_DB: ${POSTGRES_DB:-records_portal}
+
+x-database-url: &database-url
+  # The password must be URL-safe (letters, digits, - and _) to sit in this URL.
+  DATABASE_URL: postgresql://${POSTGRES_USER:-prrp}:${POSTGRES_PASSWORD:-local-dev-password}@db:5432/${POSTGRES_DB:-records_portal}?schema=public
 
 services:
   db:
     image: postgres:16-alpine
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:?set in .env}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set in .env}
-      POSTGRES_DB: ${POSTGRES_DB:?set in .env}
+    environment: *db-env
     volumes:
       - pgdata:/var/lib/postgresql/data
     ports:
-      - "127.0.0.1:5432:5432" # localhost only, so Prisma migrations can run from the host
+      # Localhost only, so `npm run dev` and Prisma on the host can connect.
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     networks: [data]
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
@@ -24,10 +35,45 @@ services:
       timeout: 3s
       retries: 10
 
+  # One-off job: applies migrations, then loads demo data if the DB is empty.
+  migrate:
+    build:
+      context: ./app
+      target: build
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed"
+    environment:
+      <<: *database-url
+      SEED_PASSWORD: ${SEED_PASSWORD:-demo-password-local-only}
+      SEED_ONLY_IF_EMPTY: "1"
+    networks: [data]
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  web:
+    build:
+      context: ./app
+      target: runner
+    environment:
+      <<: *database-url
+      AUTH_SECRET: ${AUTH_SECRET:-local-dev-only-auth-secret-change-me-0123456789}
+      AUTH_URL: http://localhost:${WEB_PORT:-3000}
+      INTEGRATION_SERVICE_URL: http://integration-service:8000
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-local-dev-only-service-token-0123456789abcdef}
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    networks: [public, data, internal]
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      integration-service:
+        condition: service_healthy
+
   integration-service:
     build: ./integration-service
     environment:
-      SERVICE_TOKEN: ${SERVICE_TOKEN:?set in .env}
+      SERVICE_TOKEN: ${SERVICE_TOKEN:-local-dev-only-service-token-0123456789abcdef}
       DMS_BASE_URL: http://mock-services:8100/dms
       NOTIFY_BASE_URL: http://mock-services:8100/notify
       LOG_LEVEL: INFO
@@ -42,13 +88,11 @@ services:
       MOCK_FAILURE_RATE: ${MOCK_FAILURE_RATE:-0.2}
     networks: [internal]
 
-  # web: the Next.js portal is added here once the app/ scaffold exists.
-  # It joins all three networks and is the only service with a public port.
-
 networks:
+  public: {}
+  data: {}
   internal:
     internal: true
-  data: {}
 
 volumes:
   pgdata: {}

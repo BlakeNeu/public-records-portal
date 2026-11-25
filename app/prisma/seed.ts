@@ -115,6 +115,13 @@ const requests: SeedRequest[] = [
 ];
 
 async function main() {
+  // Docker Compose runs the seed on every start with SEED_ONLY_IF_EMPTY=1,
+  // so demo data loads once and later restarts keep whatever you changed.
+  if (process.env.SEED_ONLY_IF_EMPTY === "1" && (await prisma.user.count()) > 0) {
+    console.log("Database already has data; skipping seed.");
+    return;
+  }
+
   // TRUNCATE skips the row-level append-only trigger on audit_logs. That's
   // fine for a local reset; in AWS the app's DB role isn't granted TRUNCATE.
   await prisma.$executeRawUnsafe(
