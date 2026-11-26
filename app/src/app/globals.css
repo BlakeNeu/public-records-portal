@@ -30,6 +30,7 @@
   --color-hero-muted: #c3cad3;
   --color-signal-yellow: #facc15;
   --color-signal-teal: #2dd4bf;
+  --color-signal-teal-strong: #14b8a6; /* hover state for teal buttons */
 }
 
 @theme inline {

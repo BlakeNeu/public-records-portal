@@ -22,7 +22,7 @@ const steps = [
 
 export default function HomePage() {
   return (
-    <StormSection id="home-lightning" className="items-center">
+    <StormSection id="home-hero" animated={false} className="items-center">
       <div className="mx-auto w-full max-w-5xl px-4 py-20 sm:py-28">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal-teal">
           Public records portal
