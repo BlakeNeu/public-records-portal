@@ -41,7 +41,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             </Suspense>
           </div>
         </header>
-        <main id="main" className="mx-auto w-full max-w-5xl flex-1 px-4 py-8">
+        {/* Pages that render a `.full-bleed` section (the home hero) span the full width. */}
+        <main
+          id="main"
+          className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 has-[.full-bleed]:flex has-[.full-bleed]:max-w-none has-[.full-bleed]:flex-col has-[.full-bleed]:p-0"
+        >
           {children}
         </main>
         <footer className="border-t border-line px-4 py-4 text-center text-xs text-muted">
