@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { StormSection } from "@/components/storm-section";
+import { HeroSection } from "@/components/hero-section";
 import { LoginForm } from "./login-form";
 
 export const metadata: Metadata = { title: "Sign in" };
 
 export default function LoginPage() {
   return (
-    <StormSection id="login-lightning" className="items-center justify-center">
+    <HeroSection className="items-center justify-center">
       <div className="w-full max-w-sm px-4 py-16">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal-teal">
           Public records portal
@@ -21,6 +21,6 @@ export default function LoginPage() {
           Demo accounts are listed in the project README. All data is fake.
         </p>
       </div>
-    </StormSection>
+    </HeroSection>
   );
 }

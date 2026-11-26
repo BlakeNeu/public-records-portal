@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { StormSection } from "@/components/storm-section";
+import { HeroSection } from "@/components/hero-section";
 import { RESPONSE_BUSINESS_DAYS } from "@/lib/deadlines";
 
 const steps = [
@@ -22,7 +22,7 @@ const steps = [
 
 export default function HomePage() {
   return (
-    <StormSection id="home-hero" animated={false} className="items-center">
+    <HeroSection className="items-center">
       <div className="mx-auto w-full max-w-5xl px-4 py-20 sm:py-28">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal-teal">
           Public records portal
@@ -65,6 +65,6 @@ export default function HomePage() {
           ))}
         </ol>
       </div>
-    </StormSection>
+    </HeroSection>
   );
 }
