@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { LineField } from "@/components/line-field";
+import { StormSection } from "@/components/storm-section";
 import { RESPONSE_BUSINESS_DAYS } from "@/lib/deadlines";
 
 const steps = [
@@ -22,15 +22,7 @@ const steps = [
 
 export default function HomePage() {
   return (
-    <section className="full-bleed relative isolate flex flex-1 items-center overflow-hidden bg-hero text-white">
-      {/* Animated line fragments, behind everything else. */}
-      <LineField className="absolute inset-0 -z-20" />
-      {/* Darkens the middle so the text stays readable over the lines. */}
-      <div
-        aria-hidden
-        className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_center,rgba(15,18,22,0.85)_0%,rgba(15,18,22,0.45)_45%,rgba(15,18,22,0)_80%)]"
-      />
-
+    <StormSection id="home-lightning" className="items-center">
       <div className="mx-auto w-full max-w-5xl px-4 py-20 sm:py-28">
         <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal-teal">
           Public records portal
@@ -73,6 +65,6 @@ export default function HomePage() {
           ))}
         </ol>
       </div>
-    </section>
+    </StormSection>
   );
 }

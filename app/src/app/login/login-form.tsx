@@ -25,7 +25,10 @@ export function LoginForm() {
   const redirectTo = toLocalPath(useSearchParams().get("callbackUrl"));
 
   return (
-    <form action={formAction} className="space-y-4 rounded-lg border border-line bg-surface p-6">
+    <form
+      action={formAction}
+      className="space-y-4 rounded-lg border border-line bg-surface p-6 text-foreground shadow-2xl shadow-black/50"
+    >
       <input type="hidden" name="redirectTo" value={redirectTo} />
       <div className="space-y-1">
         <label htmlFor="email" className="block text-sm font-medium">
