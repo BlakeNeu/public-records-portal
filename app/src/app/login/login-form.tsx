@@ -25,7 +25,10 @@ export function LoginForm() {
   const redirectTo = toLocalPath(useSearchParams().get("callbackUrl"));
 
   return (
-    <form action={formAction} className="space-y-4 rounded-lg border border-line bg-surface p-6">
+    <form
+      action={formAction}
+      className="space-y-4 rounded-lg border border-line bg-surface p-6 text-foreground shadow-2xl shadow-black/50"
+    >
       <input type="hidden" name="redirectTo" value={redirectTo} />
       <div className="space-y-1">
         <label htmlFor="email" className="block text-sm font-medium">
@@ -54,7 +57,7 @@ export function LoginForm() {
       <button
         type="submit"
         disabled={pending}
-        className="w-full rounded bg-accent px-4 py-2 font-medium text-white hover:bg-accent-strong disabled:opacity-60"
+        className="w-full rounded bg-signal-teal px-4 py-2 font-semibold text-hero hover:bg-signal-teal-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-teal disabled:opacity-60"
       >
         {pending ? "Signing in…" : "Sign in"}
       </button>

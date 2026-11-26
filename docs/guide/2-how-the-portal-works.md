@@ -8,7 +8,7 @@ In a typical React app, components run in the browser and fetch data from an API
 
 | You know (PHP) | In this codebase | Runs where |
 |---|---|---|
-| `requests.php` that queries MySQL and echoes HTML | A **Server Component**: `src/app/requests/page.tsx` | Server |
+| `requests.php` that queries MySQL and echoes HTML | A **Server Component**: `src/app/(portal)/requests/page.tsx` | Server |
 | The script that handles `$_POST` from a form | A **Server Action**: a function in a file marked `"use server"` | Server |
 | jQuery or React in the browser | A **Client Component**: a file marked `"use client"` | Browser |
 | `.htaccess` rules or a front controller check | **Proxy**: `src/proxy.ts` | Server, before every request |
@@ -47,16 +47,18 @@ app/
 
 ### Routing: folders are URLs
 
-The file-based routing should feel familiar from PHP: `src/app/requests/page.tsx` serves `/requests`, the way `requests.php` would. Only files named `page.tsx` become pages. Other files in the folder are private helpers.
+The file-based routing should feel familiar from PHP: `src/app/(portal)/requests/page.tsx` serves `/requests`, the way `requests.php` would. Only files named `page.tsx` become pages. Other files in the folder are private helpers.
 
 | File | URL |
 |---|---|
 | `src/app/page.tsx` | `/` |
-| `src/app/requests/page.tsx` | `/requests` |
-| `src/app/requests/new/page.tsx` | `/requests/new` (you build this in chapter 4) |
-| `src/app/requests/[id]/page.tsx` | `/requests/abc123`, where `[id]` is a URL parameter, like `$_GET['id']` (also chapter 4) |
+| `src/app/(portal)/requests/page.tsx` | `/requests` |
+| `src/app/(portal)/requests/new/page.tsx` | `/requests/new` (you build this in chapter 4) |
+| `src/app/(portal)/requests/[id]/page.tsx` | `/requests/abc123`, where `[id]` is a URL parameter, like `$_GET['id']` (also chapter 4) |
 
 `layout.tsx` wraps every page below it, like a PHP header and footer include.
+
+A folder name in parentheses, like `(portal)`, is a **route group**: it is left out of the URL, so it only groups pages that share a layout. Here `(portal)/layout.tsx` gives the signed-in pages a centered column, while the home and login pages sit outside it and run full width.
 
 ## The life of a page request
 
@@ -85,7 +87,7 @@ sequenceDiagram
 3. **Inside a `<Suspense>` boundary**, the component that needs the user runs:
 
    ```tsx
-   // src/app/requests/page.tsx (simplified)
+   // src/app/(portal)/requests/page.tsx (simplified)
    export default function RequestsPage() {
      return (
        <Suspense fallback={<p>Loading requests…</p>}>

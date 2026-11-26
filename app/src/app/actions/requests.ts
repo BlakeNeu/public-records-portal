@@ -8,6 +8,9 @@ import { recordAudit } from "@/lib/audit";
 import { dueDateFor } from "@/lib/deadlines";
 import { Prisma } from "@/generated/prisma/client";
 
+const MAX_REQUESTS_PER_DAY = 10;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 const newRequestSchema = z.object({
   subject: z.string().trim().min(5, "Give the request a short subject (5+ characters).").max(200),
   description: z
@@ -37,8 +40,19 @@ export async function createRequest(
     return { errors: z.flattenError(parsed.error).fieldErrors };
   }
 
-  // 3. Save the request and its audit entry together (both or neither).
+  // 3. Cap how many requests one account can file, so a script can't flood
+  //    the clerks' queue. Counted in the database, so it holds across servers.
   const submittedAt = new Date();
+  const filedToday = await prisma.recordsRequest.count({
+    where: { requesterId: user.id, submittedAt: { gte: new Date(submittedAt.getTime() - DAY_MS) } },
+  });
+  if (filedToday >= MAX_REQUESTS_PER_DAY) {
+    return {
+      message: `You can file up to ${MAX_REQUESTS_PER_DAY} requests in 24 hours. Please try again later.`,
+    };
+  }
+
+  // 4. Save the request and its audit entry together (both or neither).
   const year = submittedAt.getUTCFullYear();
   let requestId: string | undefined;
 
@@ -82,6 +96,6 @@ export async function createRequest(
 
   if (!requestId) return { message: "Something went wrong. Please try again." };
 
-  // 4. Send the citizen to their new request.
+  // 5. Send the citizen to their new request.
   redirect(`/requests/${requestId}`);
 }

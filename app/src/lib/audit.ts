@@ -2,10 +2,12 @@ import "server-only";
 import { headers } from "next/headers";
 import type { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
+import { clientIpFrom } from "@/lib/client-ip";
 
 export type AuditAction =
   | "auth.login_succeeded"
   | "auth.login_failed"
+  | "auth.login_rate_limited"
   | "auth.logout"
   | "request.created"
   | "request.status_changed"
@@ -25,9 +27,7 @@ type AuditEntry = {
 
 async function clientIp(): Promise<string | null> {
   try {
-    const h = await headers();
-    // Behind the load balancer, the left-most X-Forwarded-For entry is the client.
-    return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip");
+    return clientIpFrom(await headers());
   } catch {
     return null; // called outside a request (e.g. a script)
   }

@@ -70,7 +70,7 @@ export async function getInternalNotesFor(user: CurrentUser, requestId: string) 
 
 ### Step 2: create the page
 
-Create `app/src/app/requests/[id]/page.tsx`. The square brackets make `id` a URL parameter.
+Create `app/src/app/(portal)/requests/[id]/page.tsx`. The square brackets make `id` a URL parameter.
 
 ```tsx
 import type { Metadata } from "next";
@@ -180,7 +180,7 @@ What's going on:
 
 ### Step 3: link to it from the list
 
-In [app/src/app/requests/page.tsx](../../app/src/app/requests/page.tsx), add `import Link from "next/link";` at the top, then wrap the subject in a link:
+In [app/src/app/(portal)/requests/page.tsx](<../../app/src/app/(portal)/requests/page.tsx>), add `import Link from "next/link";` at the top, then wrap the subject in a link:
 
 ```tsx
 <td className="px-4 py-3">
@@ -312,7 +312,7 @@ The four numbered steps are the same in every server action you'll write:
 
 ### Step 6: build the form (a Client Component)
 
-The form needs `useActionState` to show errors and a "Submitting…" state, so it's a Client Component. Create `app/src/app/requests/new/new-request-form.tsx`:
+The form needs `useActionState` to show errors and a "Submitting…" state, so it's a Client Component. Create `app/src/app/(portal)/requests/new/new-request-form.tsx`:
 
 ```tsx
 "use client";
@@ -367,7 +367,7 @@ export function NewRequestForm() {
 
 ### Step 7: create the page
 
-Create `app/src/app/requests/new/page.tsx`. It's a Server Component that checks the role, then renders the form:
+Create `app/src/app/(portal)/requests/new/page.tsx`. It's a Server Component that checks the role, then renders the form:
 
 ```tsx
 import type { Metadata } from "next";

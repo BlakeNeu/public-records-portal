@@ -8,7 +8,10 @@ export async function UserMenu() {
 
   if (!user) {
     return (
-      <Link href="/login" className="text-sm font-medium text-accent hover:underline">
+      <Link
+        href="/login"
+        className="rounded bg-signal-teal px-3 py-1.5 text-sm font-semibold text-hero hover:bg-signal-teal-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-signal-teal"
+      >
         Sign in
       </Link>
     );

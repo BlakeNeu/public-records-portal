@@ -24,6 +24,15 @@
   }
 }
 
+/* Home page hero: always dark, whatever the visitor's light/dark setting. */
+@theme {
+  --color-hero: #0f1216;
+  --color-hero-muted: #c3cad3;
+  --color-signal-yellow: #facc15;
+  --color-signal-teal: #2dd4bf;
+  --color-signal-teal-strong: #14b8a6; /* hover state for teal buttons */
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-surface: var(--surface);
