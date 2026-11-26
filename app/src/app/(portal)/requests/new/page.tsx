@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { requireUser } from "@/lib/dal";
+import { redirect } from "next/navigation";
+import { isStaff, requireUser } from "@/lib/dal";
 import { RESPONSE_BUSINESS_DAYS } from "@/lib/deadlines";
 import { NewRequestForm } from "./new-request-form";
 
@@ -23,6 +24,10 @@ export default function NewRequestPage() {
 
 // Checks the role before showing the form (the action checks again on submit).
 async function CitizenOnly() {
-  await requireUser("citizen");
+  // Staff can land here from the home page's "Start a request" button (via the
+  // login redirect). This page is public knowledge, so instead of a 404, send
+  // them to the request list they work from.
+  const user = await requireUser();
+  if (isStaff(user)) redirect("/requests");
   return <NewRequestForm />;
 }
