@@ -98,7 +98,7 @@ cd app && npm run lint && npx tsc --noEmit && npm run build
 - [ ] Request submission form and request detail page
 - [ ] Clerk workflow: assign, change status, internal notes, notifications via the integration service
 - [ ] Secure document uploads and release to citizens
-- [ ] Login rate limiting
+- [x] Rate limiting (login brute force, request floods, filing caps) and security headers
 - [x] Whole stack runs with one `docker compose up`
 - [ ] Unit and end-to-end tests for the portal
 - [ ] GitHub Actions CI
@@ -113,7 +113,14 @@ cd app && npm run lint && npx tsc --noEmit && npm run build
 
 This project is intentionally not hosted on a personal AWS account. A public endpoint invites **denial of wallet**: abusive traffic drives up compute, data transfer and log costs, and billing alerts only notify, they don't stop the charges.
 
-In a real production deployment I would add:
+The portal limits abuse itself:
+
+- **Sign-in:** 5 failed attempts per email address and 20 per IP in 15 minutes, counted in the audit log so the limit holds across restarts and containers. Locking out unknown emails too means a lockout doesn't reveal which accounts exist.
+- **Every request:** the proxy allows 600 requests a minute per IP and 300 per signed-in user, with tighter caps on form posts (60 and 30). Over the limit it returns `429` with `Retry-After`. These counts live in each container's memory.
+- **New records requests:** 10 per citizen in 24 hours.
+- **Headers:** a Content Security Policy, HSTS, `nosniff`, `X-Frame-Options: DENY` and a strict referrer policy.
+
+The in-app limits are a backstop. In a real production deployment I would add:
 
 - AWS WAF with rate-based rules in front of the load balancer
 - CloudFront for caching and absorbing traffic spikes

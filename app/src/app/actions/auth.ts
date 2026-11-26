@@ -1,7 +1,7 @@
 "use server";
 
 import { AuthError } from "next-auth";
-import { signIn, signOut } from "@/auth";
+import { LoginRateLimited, signIn, signOut } from "@/auth";
 import { getCurrentUser } from "@/lib/dal";
 import { recordAudit } from "@/lib/audit";
 
@@ -24,7 +24,11 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
       redirectTo: safeRedirect(formData.get("redirectTo")),
     });
   } catch (error) {
-    // One message for every failure, so it doesn't reveal which emails exist.
+    // The lockout applies to every email alike, so naming it reveals nothing.
+    if (error instanceof LoginRateLimited) {
+      return { error: "Too many sign-in attempts. Wait 15 minutes and try again." };
+    }
+    // One message for every other failure, so it doesn't reveal which emails exist.
     if (error instanceof AuthError) return { error: "Incorrect email or password." };
     throw error; // includes the redirect Next.js throws on success
   }
