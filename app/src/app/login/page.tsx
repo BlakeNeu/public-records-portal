@@ -9,10 +9,10 @@ export default function LoginPage() {
   return (
     <HeroSection className="items-center justify-center">
       <div className="w-full max-w-sm px-4 py-16">
-        <p className="font-mono text-xs uppercase tracking-[0.25em] text-signal-teal">
+        <p className="mb-6 font-mono text-s uppercase tracking-[0.25em] text-signal-teal">
           Public records portal
         </p>
-        <h1 className="mb-6 mt-3 text-3xl font-semibold tracking-tight">Sign in</h1>
+        {/* <h1 className="mb-6 mt-3 text-3xl font-semibold tracking-tight">Sign in</h1> */}
         {/* The form reads ?callbackUrl= from the URL, which is request-time data. */}
         <Suspense>
           <LoginForm />

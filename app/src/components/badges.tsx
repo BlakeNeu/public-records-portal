@@ -7,7 +7,7 @@ const STATUS_STYLES: Record<RequestStatus, { label: string; className: string }>
   denied: { label: "Denied", className: "bg-rose-100 text-rose-900 dark:bg-rose-900/40 dark:text-rose-200" },
 };
 
-const pill = "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap";
+const pill = "inline-flex items-center px-2 py-0.5 text-xs font-medium whitespace-nowrap";
 
 export function StatusBadge({ status }: { status: RequestStatus }) {
   const s = STATUS_STYLES[status];

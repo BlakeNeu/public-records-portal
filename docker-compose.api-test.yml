@@ -1,0 +1,22 @@
+# Local API testing only. Publishes the integration service on 127.0.0.1:8000
+# so Bruno on the host can reach it, and turns off the mock's random outages
+# so test results are repeatable. Run from the repository root:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.api-test.yml up --build -d
+#
+# The base stack keeps the integration service on an internal-only network.
+# Docker can't publish ports from an internal network, so this adds a second,
+# ordinary network. Never use this file outside local development.
+
+services:
+  integration-service:
+    ports:
+      - "127.0.0.1:8000:8000"
+    networks: [internal, api-test]
+
+  mock-services:
+    environment:
+      MOCK_FAILURE_RATE: "0"
+
+networks:
+  api-test: {}

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { requireUser, isStaff } from "@/lib/dal";
 import { listRequestsFor } from "@/lib/requests";
 import { isOverdue } from "@/lib/deadlines";
-import { OverdueBadge, StatusBadge } from "@/components/badges";
+import { StatusBadge } from "@/components/badges";
 
 export const metadata: Metadata = { title: "Requests" };
 
@@ -28,12 +28,30 @@ async function RequestsTable() {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h1 className="text-2xl font-semibold tracking-tight">{staff ? "All requests" : "My requests"}</h1>
-        {!staff && (
-          <Link href="/requests/new" className="rounded bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-strong">
-            New request
-          </Link>
-        )}
+        <div className="flex flex-wrap items-center gap-3">
+          {!staff && (
+            <Link
+              href="/requests/new"
+              // Icon-only, so the label gives screen readers (and the hover tooltip) a name.
+              aria-label="New request"
+              title="New request"
+              className="inline-flex items-center gap-1.5 rounded bg-background px-3 py-1.5 text-sm font-medium text-foreground ring-1 ring-line hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent"
+            >
+              <svg
+                aria-hidden
+                viewBox="0 0 16 16"
+                className="size-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth={2}
+                strokeLinecap="round"
+              >
+                <path d="M8 3v10M3 8h10" />
+              </svg>
+            </Link>
+          )}
+          <h1 className="text-2xl font-semibold tracking-tight">{staff ? "All requests" : "My requests"}</h1>
+        </div>
         {staff && overdueCount > 0 && (
           <p className="text-sm font-medium text-danger">
             {overdueCount} {overdueCount === 1 ? "request is" : "requests are"} past due
@@ -59,7 +77,14 @@ async function RequestsTable() {
             <tbody className="divide-y divide-line">
               {requests.map((r) => (
                 <tr key={r.id}>
-                  <td className="whitespace-nowrap px-4 py-3 font-mono text-xs">{r.referenceNumber}</td>
+                  {/* Past-due requests show their reference in red. Color alone isn't
+                      announced by screen readers, so they also get hidden text. */}
+                  <td
+                    className={`whitespace-nowrap px-4 py-3 font-mono text-xs ${isOverdue(r, now) ? "font-semibold text-danger" : ""}`}
+                  >
+                    {r.referenceNumber}
+                    {isOverdue(r, now) && <span className="sr-only"> (overdue)</span>}
+                  </td>
                   <td className="px-4 py-3">
                     <Link href={`/requests/${r.id}`} className="text-accent hover:underline">
                       {r.subject}
@@ -72,10 +97,7 @@ async function RequestsTable() {
                     </td>
                   )}
                   <td className="px-4 py-3">
-                    <span className="flex flex-wrap gap-1">
-                      <StatusBadge status={r.status} />
-                      {isOverdue(r, now) && <OverdueBadge />}
-                    </span>
+                    <StatusBadge status={r.status} />
                   </td>
                   <td className="whitespace-nowrap px-4 py-3">
                     {r.closedAt ? (

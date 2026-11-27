@@ -52,7 +52,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           {children}
         </main>
         <footer className="border-t border-line px-4 py-4 text-center text-xs text-muted">
-          Demo project with fake data. Not affiliated with any government agency.
+          Not affiliated with any government agency.
         </footer>
       </body>
     </html>
