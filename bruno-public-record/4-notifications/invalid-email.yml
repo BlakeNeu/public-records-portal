@@ -1,0 +1,29 @@
+info:
+  name: Rejects an invalid email address
+  type: http
+  seq: 4
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "not-an-email",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "in_review"
+      }
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("names recipient_email as the invalid field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include("body.recipient_email");
+        });

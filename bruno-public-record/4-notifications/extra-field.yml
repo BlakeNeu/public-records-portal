@@ -1,0 +1,31 @@
+info:
+  name: Rejects unexpected fields
+  type: http
+  seq: 6
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "in_review",
+        "template": "attacker_controlled_template"
+      }
+docs: The model forbids extra fields, so a caller can't slip in other values such as a different email template.
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("names the unexpected field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include("body.template");
+        });

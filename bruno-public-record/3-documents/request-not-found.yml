@@ -1,0 +1,20 @@
+info:
+  name: Unknown request returns 404
+  type: http
+  seq: 3
+http:
+  method: GET
+  url: "{{baseUrl}}/v1/requests/{{missingRequestId}}/documents"
+  auth: inherit
+docs: The mock document system returns 404 for any ID that starts with MISSING.
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 404", function () {
+          expect(res.getStatus()).to.equal(404);
+        });
+
+        test("says it was not found upstream, with no upstream details", function () {
+          expect(res.getBody()).to.deep.equal({ detail: "not found upstream" });
+        });

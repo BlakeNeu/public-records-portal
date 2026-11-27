@@ -1,0 +1,8 @@
+info:
+  name: 3 Documents
+  type: folder
+  seq: 3
+request:
+  auth:
+    type: bearer
+    token: "{{prrp_key}}"

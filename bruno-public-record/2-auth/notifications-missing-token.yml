@@ -1,0 +1,23 @@
+info:
+  name: Notifications also require a token
+  type: http
+  seq: 3
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "in_review"
+      }
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 401 before validating or sending anything", function () {
+          expect(res.getStatus()).to.equal(401);
+        });

@@ -1,0 +1,41 @@
+info:
+  name: Send a status-change notification
+  type: http
+  seq: 1
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "in_review",
+        "due_at": "2026-12-15T17:00:00Z"
+      }
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const body = res.getBody();
+
+        test("returns 202 Accepted", function () {
+          expect(res.getStatus()).to.equal(202);
+        });
+
+        test("returns only a delivery ID and channel", function () {
+          expect(body).to.have.all.keys("delivery_id", "channel");
+        });
+
+        test("delivery ID is a UUID", function () {
+          expect(body.delivery_id).to.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i);
+        });
+
+        test("channel is email", function () {
+          expect(body.channel).to.equal("email");
+        });
+
+        bru.setVar("lastDeliveryId", body.delivery_id);

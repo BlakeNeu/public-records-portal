@@ -1,0 +1,21 @@
+info:
+  name: Rejects an ID with invalid characters
+  type: http
+  seq: 4
+http:
+  method: GET
+  url: "{{baseUrl}}/v1/requests/REQ_2026.id/documents"
+  auth: inherit
+docs: Request IDs may only contain letters, digits and hyphens. This one has an underscore and a dot.
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("names request_id as the invalid field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include("path.request_id");
+        });

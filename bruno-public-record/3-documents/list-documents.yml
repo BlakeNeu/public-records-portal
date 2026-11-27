@@ -1,0 +1,55 @@
+info:
+  name: List documents for a request
+  type: http
+  seq: 1
+http:
+  method: GET
+  url: "{{baseUrl}}/v1/requests/{{requestId}}/documents"
+  auth: inherit
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const ALLOWED_TYPES = ["application/pdf", "image/png", "image/jpeg", "text/plain"];
+        const body = res.getBody();
+
+        test("returns 200", function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test("echoes the request ID it was asked for", function () {
+          expect(body.request_id).to.equal(bru.getEnvVar("requestId"));
+        });
+
+        test("has a documents list and a rejected count", function () {
+          expect(body).to.have.all.keys("request_id", "documents", "rejected_count");
+          expect(body.documents).to.be.an("array");
+          expect(body.rejected_count).to.be.a("number").and.to.be.at.least(0);
+        });
+
+        test("every document has the normalised snake_case shape", function () {
+          for (const doc of body.documents) {
+            expect(doc).to.have.all.keys("document_id", "filename", "content_type", "size_bytes", "created_at");
+            expect(doc.document_id).to.be.a("string").and.not.empty;
+            expect(doc.filename).to.be.a("string").and.not.empty;
+            expect(doc.size_bytes).to.be.a("number").and.to.be.above(0);
+            expect(Number.isNaN(Date.parse(doc.created_at))).to.equal(false);
+          }
+        });
+
+        test("only returns allowed file types", function () {
+          for (const doc of body.documents) {
+            expect(ALLOWED_TYPES).to.include(doc.content_type);
+          }
+        });
+
+        test("hides the upstream system's camelCase field names", function () {
+          expect(JSON.stringify(body)).to.not.match(/docId|fileName|mimeType|sizeBytes|createdAt/);
+        });
+
+        test("accounts for every upstream file (the mock returns 1 to 4)", function () {
+          expect(body.documents.length + body.rejected_count).to.be.within(1, 4);
+        });
+
+        // Saved for the next request, which checks the result is repeatable.
+        bru.setVar("documentsSnapshot", JSON.stringify(body));

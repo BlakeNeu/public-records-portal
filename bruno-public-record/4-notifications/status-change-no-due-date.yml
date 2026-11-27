@@ -1,0 +1,28 @@
+info:
+  name: Due date is optional
+  type: http
+  seq: 2
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "fulfilled"
+      }
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 202 Accepted", function () {
+          expect(res.getStatus()).to.equal(202);
+        });
+
+        test("gets a new delivery ID, different from the previous notification", function () {
+          expect(res.getBody().delivery_id).to.not.equal(bru.getVar("lastDeliveryId"));
+        });

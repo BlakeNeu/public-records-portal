@@ -43,5 +43,5 @@ Thumbs.db
 !.vscode/extensions.json
 .idea/
 
-# Bruno API
-/bruno-public-record/*
+# Bruno CLI reports (contain response bodies)
+/bruno-public-record/results.*

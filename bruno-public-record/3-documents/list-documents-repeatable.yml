@@ -1,0 +1,23 @@
+info:
+  name: Same request returns the same documents
+  type: http
+  seq: 2
+http:
+  method: GET
+  url: "{{baseUrl}}/v1/requests/{{requestId}}/documents"
+  auth: inherit
+docs: Run "List documents for a request" first. It saves the response that this request compares against.
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        const snapshot = bru.getVar("documentsSnapshot");
+
+        test("returns 200", function () {
+          expect(res.getStatus()).to.equal(200);
+        });
+
+        test("matches the previous response", function () {
+          expect(snapshot, "no snapshot: run the previous request first").to.be.a("string");
+          expect(res.getBody()).to.deep.equal(JSON.parse(snapshot));
+        });
