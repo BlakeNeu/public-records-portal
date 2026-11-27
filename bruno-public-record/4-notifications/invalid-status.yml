@@ -1,0 +1,30 @@
+info:
+  name: Rejects an unknown status
+  type: http
+  seq: 3
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{recipientName}}",
+        "new_status": "approved"
+      }
+docs: The allowed statuses are submitted, in_review, fulfilled and denied.
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("names new_status as the invalid field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include("body.new_status");
+        });

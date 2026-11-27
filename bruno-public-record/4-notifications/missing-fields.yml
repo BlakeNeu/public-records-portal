@@ -1,0 +1,26 @@
+info:
+  name: Rejects a body with required fields missing
+  type: http
+  seq: 5
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}"
+      }
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("lists every missing required field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include.members(["body.recipient_email", "body.recipient_name", "body.new_status"]);
+        });

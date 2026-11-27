@@ -1,0 +1,22 @@
+info:
+  name: Rejects a missing token
+  type: http
+  seq: 1
+http:
+  method: GET
+  url: "{{baseUrl}}/v1/requests/{{requestId}}/documents"
+runtime:
+  scripts:
+    - type: tests
+      code: |-
+        test("returns 401", function () {
+          expect(res.getStatus()).to.equal(401);
+        });
+
+        test("says only that the token is invalid", function () {
+          expect(res.getBody()).to.deep.equal({ detail: "invalid service token" });
+        });
+
+        test("asks for a Bearer token", function () {
+          expect(res.getHeader("www-authenticate")).to.equal("Bearer");
+        });

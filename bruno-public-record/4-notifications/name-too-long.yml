@@ -1,0 +1,32 @@
+info:
+  name: Rejects a recipient name over 200 characters
+  type: http
+  seq: 7
+http:
+  method: POST
+  url: "{{baseUrl}}/v1/notifications/status-change"
+  auth: inherit
+  body:
+    type: json
+    data: |-
+      {
+        "request_id": "{{requestId}}",
+        "recipient_email": "{{recipientEmail}}",
+        "recipient_name": "{{longName}}",
+        "new_status": "in_review"
+      }
+runtime:
+  scripts:
+    - type: before-request
+      code: |-
+        bru.setVar("longName", "A".repeat(201));
+    - type: tests
+      code: |-
+        test("returns 422", function () {
+          expect(res.getStatus()).to.equal(422);
+        });
+
+        test("names recipient_name as the invalid field", function () {
+          const locs = res.getBody().detail.map(function (e) { return e.loc.join("."); });
+          expect(locs).to.include("body.recipient_name");
+        });
